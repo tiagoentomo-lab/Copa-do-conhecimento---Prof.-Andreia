@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copa da Saúde 2026 🇧🇷</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0b6623;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .top {
+            width: 100%;
+            background: linear-gradient(#002776, #000814);
+            text-align: center;
+            padding: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .placar-container {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .timer {
+            font-size: 22px;
+            color: #ffdf00;
+            background: rgba(0,0,0,0.3);
+            padding: 5px 20px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 600px;
+            margin-top: 20px;
+            background: #009739;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .vez-indicador {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            padding: 8px;
+            border-bottom: 4px solid #ffdf00;
+        }
+
+        #pergunta-texto {
+            font-size: 20px;
+            margin-bottom: 20px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .opcoes-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: none;
+            background: #ffdf00;
+            color: #002776;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover { background: #fff; transform: translateY(-2px); }
+        button:active { transform: scale(0.95); }
+
+        .goal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            color: #ffdf00;
+            text-shadow: 4px 4px 0px #002776;
+            display: none;
+            z-index: 100;
+            animation: zoom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes zoom {
+            from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="top">
+    <h2 id="fase-nome">Oitavas de Final</h2>
+    <div class="placar-container">
+        <div id="n1">J1</div>
+        <div id="placar">0 x 0</div>
+        <div id="n2">J2</div>
+    </div>
+    <div class="timer">⏱️ <span id="tempo">10</span>s</div>
+</div>
+
+<div class="goal" id="goal">⚽ GOL!</div>
+
+<div class="game-container" id="box">
+    <div class="vez-indicador" id="turno-texto">Vez de: <span id="jogador-atual">---</span></div>
+    <div id="pergunta-texto">Carregando...</div>
+    <div class="opcoes-grid" id="opcoes"></div>
+</div>
+
+<script>
+const bancoDePerguntas = [
+    {p:"O que define o 'Exercício Físico'?", r:["Qualquer movimento do corpo","Atividade planejada e repetitiva","Caminhar até a geladeira"], c:1},
+    {p:"Qual órgão bombeia sangue para os músculos no treino?", r:["Pulmão","Cérebro","Coração"], c:2},
+    {p:"O que acontece com a respiração durante a corrida?", r:["Fica mais rápida e profunda","Fica mais lenta","Para por alguns segundos"], c:0},
+    {p:"Qual a função principal dos músculos?", r:["Produzir gordura","Gerar movimento e força","Filtrar a água no corpo"], c:1},
+    {p:"O que é flexibilidade?", r:["Capacidade de pular alto","Capacidade de realizar movimentos amplos","Força para carregar peso"], c:1},
+    {p:"Qual destes ajuda na recuperação muscular?", r:["Dormir bem","Ficar acordado","Comer apenas doces"], c:0},
+    {p:"O que é frequência cardíaca?", r:["O número de passos por minuto","O número de batimentos do coração por minuto","A velocidade da corrida"], c:1},
+    {p:"Por que suamos durante o exercício?", r:["Para perder peso rápido","Para resfriar o corpo","Para ganhar energia"], c:1},
+    {p:"O que é o aquecimento antes do esporte?", r:["Comer algo quente","Preparar o corpo e evitar lesões","Dormir um pouco"], c:1},
+    {p:"Qual o benefício da atividade física para a mente?", r:["Causa estresse","Reduz a ansiedade e melhora o humor","Não traz benefícios"], c:1},
+    {p:"Qual nutriente dá energia imediata para correr?", r:["Carboidratos","Gorduras","Fibras"], c:0},
+    {p:"As proteínas são importantes para:", r:["Dar sede","Construir e recuperar tecidos","Aumentar o sono"], c:1},
+    {p:"Qual a melhor bebida para hidratar no dia a dia?", r:["Refrigerante","Suco em pó","Água"], c:2},
+    {p:"Onde encontramos mais vitaminas e minerais?", r:["Salgadinhos e doces","Frutas e verduras","Macarrão puro"], c:1},
+    {p:"O excesso de sal na comida pode causar:", r:["Pressão alta","Mais energia","Dentes fortes"], c:0},
+    {p:"A desidratação pode causar:", r:["Muita força","Cansaço e dor de cabeça","Felicidade"], c:1},
+    {p:"O café da manhã é importante porque:", r:["Dá energia após o jejum da noite","Ajuda a dormir melhor","Não é importante"], c:0},
+    {p:"Qual o papel das fibras na alimentação?", r:["Ajudar o intestino a funcionar","Dar sono","Substituir a água"], c:0},
+    {p:"O que é uma dieta equilibrada?", r:["Comer só um tipo de alimento","Comer de tudo um pouco com qualidade","Comer muito de tudo"], c:1},
+    {p:"O açúcar em excesso está ligado a:", r:["Cáries e diabetes","Ossos fortes","Melhor visão"], c:0},
+    {p:"O que caracteriza um esporte de 'Invasão'?", r:["Jogar sozinho","Entrar no campo do adversário para pontuar","Jogar com rede no meio"], c:1},
+    {p:"Qual destes é um esporte de rede?", r:["Futebol","Voleibol","Basquete"], c:1},
+    {p:"No esporte, 'Fair Play' significa:", r:["Jogar sujo para vencer","Respeito e jogo limpo","Gritar com o juiz"], c:1},
+    {p:"Quantos jogadores tem um time de futsal em quadra?", r:["11 jogadores","5 jogadores","7 jogadores"], c:1},
+    {p:"O que é uma modalidade individual?", r:["Futebol","Natação (prova simples)","Vôlei"], c:1},
+    {p:"Qual a função do árbitro no jogo?", r:["Ajudar um dos times","Garantir o cumprimento das regras","Apenas observar"], c:1},
+    {p:"Esportes de marca são aqueles que:", r:["Têm juízes de linha","Focam em tempo, peso ou distância","São jogados na praia"], c:1},
+    {p:"Qual a importância das regras no esporte?", r:["Atrapalhar o jogo","Organizar a disputa e garantir segurança","Não têm importância"], c:1},
+    {p:"No basquete, como se marcam pontos?", r:["Chutando a bola","Arremessando a bola na cesta","Batendo na bola com raquete"], c:1},
+    {p:"O que é o sedentarismo?", r:["Estilo de vida com pouco movimento","Praticar esportes todo dia","Comer muitas frutas"], c:0},
+    {p:"Qual a importância de lavar as mãos?", r:["Apenas estética","Prevenir doenças e infecções","Gastar água"], c:1},
+    {p:"Quantas horas de sono um jovem precisa em média?", r:["4 a 5 horas","8 a 10 horas","15 a 20 horas"], c:1},
+    {p:"A postura correta ao sentar ajuda a evitar:", r:["Dores na coluna","Fome","Crescimento"], c:0},
+    {p:"O que a vacinação faz pelo corpo?", r:["Causa doenças","Ensina o corpo a se defender de vírus","Não serve para nada"], c:1},
+    {p:"O uso excessivo de telas antes de dormir:", r:["Melhora o sono","Atrapalha o descanso do cérebro","Dá mais energia"], c:1},
+    {p:"Qual vitamina o sol ajuda nosso corpo a produzir?", r:["Vitamina C","Vitamina D","Vitamina A"], c:1},
+    {p:"O IMC relaciona quais medidas?", r:["Peso e Altura","Idade e Força","Sono e Fome"], c:0},
+    {p:"Atividade física na infância ajuda a fortalecer:", r:["Apenas os cabelos","Os ossos e músculos","Nada"], c:1},
+    {p:"Qual hábito prejudica os pulmões?", r:["Natação","Fumar","Caminhar"], c:1},
+    {p:"Saúde não é só falta de doença, envolve também:", r:["Bem-estar mental e social","Apenas ter músculos","Ter muito dinheiro"], c:0}
+];
+
+let perguntasJ1 = [];
+let perguntasJ2 = [];
+let gols1 = 0, gols2 = 0;
+let rodadaIndex = 0;
+let vezDoJogador = 1;
+let tempo = 10;
+let intervalo;
+const fases = ["Oitavas", "Quartas", "Semifinal", "Final"];
+
+const somGol = new Audio("https://actions.google.com/sounds/v1/sports/crowd_cheer.ogg");
+const somErro = new Audio("https://actions.google.com/sounds/v1/cartoon/boing.ogg");
+
+let nome1 = prompt("Jogador 1 - Nome da Seleção:", "Brasil") || "Brasil";
+let nome2 = prompt("Jogador 2 - Nome da Seleção:", "Argentina") || "Argentina";
+
+function iniciarJogo() {
+    // Embaralha tudo e divide 15 para cada (total 30 perguntas usadas)
+    let embaralhado = [...bancoDePerguntas].sort(() => Math.random() - 0.5);
+    perguntasJ1 = embaralhado.slice(0, 15);
+    perguntasJ2 = embaralhado.slice(15, 30);
+
+    document.getElementById("n1").innerText = nome1;
+    document.getElementById("n2").innerText = nome2;
+    proximoTurno();
+}
+
+function proximoTurno() {
+    clearInterval(intervalo);
+
+    if (rodadaIndex >= 15) {
+        finalizar();
+        return;
+    }
+
+    // Define a fase visualmente
+    let f;
+    if (rodadaIndex < 4) f = 0;
+    else if (rodadaIndex < 8) f = 1;
+    else if (rodadaIndex < 12) f = 2;
+    else f = 3;
+    document.getElementById("fase-nome").innerText = fases[f];
+
+    atualizarTela();
+
+    tempo = 10;
+    document.getElementById("tempo").innerText = tempo;
+    intervalo = setInterval(() => {
+        tempo--;
+        document.getElementById("tempo").innerText = tempo;
+        if (tempo <= 0) confirmarResposta(-1);
+    }, 1000);
+}
+
+function atualizarTela() {
+    // Pega a pergunta específica do jogador da vez
+    const p = (vezDoJogador === 1) ? perguntasJ1[rodadaIndex] : perguntasJ2[rodadaIndex];
+    const nomeAtu = (vezDoJogador === 1) ? nome1 : nome2;
+
+    document.getElementById("jogador-atual").innerText = nomeAtu;
+    document.getElementById("pergunta-texto").innerText = p.p;
+    document.getElementById("placar").innerText = `${gols1} x ${gols2}`;
+    
+    // Troca a cor do indicador para facilitar a visão
+    document.getElementById("turno-texto").style.color = (vezDoJogador === 1) ? "#ffdf00" : "#fff";
+
+    let html = "";
+    p.r.forEach((txt, i) => {
+        html += `<button onclick="confirmarResposta(${i})">${txt}</button>`;
+    });
+    document.getElementById("opcoes").innerHTML = html;
+}
+
+function confirmarResposta(idx) {
+    clearInterval(intervalo);
+    const p = (vezDoJogador === 1) ? perguntasJ1[rodadaIndex] : perguntasJ2[rodadaIndex];
+
+    if (idx === p.c) {
+        if (vezDoJogador === 1) gols1++; else gols2++;
+        golAnim();
+    } else {
+        somErro.play();
+    }
+
+    if (vezDoJogador === 1) {
+        vezDoJogador = 2;
+    } else {
+        vezDoJogador = 1;
+        rodadaIndex++;
+    }
+
+    proximoTurno();
+}
+
+function golAnim() {
+    somGol.play();
+    const g = document.getElementById("goal");
+    g.style.display = "block";
+    setTimeout(() => g.style.display = "none", 800);
+}
+
+function finalizar() {
+    let m = `Fim de Jogo!\n${nome1}: ${gols1}\n${nome2}: ${gols2}\n\n`;
+    if (gols1 > gols2) m += `🏆 ${nome1} CAMPEÃO!`;
+    else if (gols2 > gols1) m += `🏆 ${nome2} CAMPEÃO!`;
+    else m += "🤝 EMPATE!";
+    alert(m);
+    location.reload();
+}
+
+iniciarJogo();
+</script>
+
+</body>
+</html>
